@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente RAG Personal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="chat-container">
+        <header>
+            <h2>Asistente de Kevin</h2>
+            <select id="role-select">
+                <option value="1">Reclutador</option>
+                <option value="2">Cliente potencial</option>
+                <option value="3">Estudiante</option>
+                <option value="4">Colega profesional</option>
+                <option value="5" selected>Público general</option>
+            </select>
+        </header>
+
+        <div id="chat-history" class="chat-history">
+            <div class="message bot">¡Hola! Selecciona tu rol arriba y pregúntame lo que necesites saber sobre mi perfil profesional.</div>
+        </div>
+
+        <div id="loading" class="loading hidden">El asistente está pensando...</div>
+
+        <div class="chat-input-area">
+            <input type="text" id="user-input" placeholder="Escribe tu pregunta..." onkeypress="handleKeyPress(event)">
+            <button onclick="enviarMensaje()">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                enviarMensaje();
+            }
+        }
+
+        function enviarMensaje() {
+            const input = document.getElementById('user-input');
+            const history = document.getElementById('chat-history');
+            const loading = document.getElementById('loading');
+            const roleSelect = document.getElementById('role-select');
+            
+            const texto = input.value.trim();
+            if (!texto) return;
+
+            // 1. Mostrar mensaje del usuario
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user';
+            userMsg.textContent = texto;
+            history.appendChild(userMsg);
+
+            input.value = '';
+            history.scrollTop = history.scrollHeight;
+            loading.classList.remove('hidden');
+
+            // 2. Enviar petición al backend de Flask
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pregunta: texto, rol: roleSelect.value })
+            })
+            .then(res => res.json())
+            .then(data => {
+                loading.classList.add('hidden');
+                
+                // 3. Mostrar respuesta del bot
+                const botMsg = document.createElement('div');
+                botMsg.className = 'message bot';
+                botMsg.textContent = data.respuesta;
+                history.appendChild(botMsg);
+                history.scrollTop = history.scrollHeight;
+            })
+            .catch(err => {
+                loading.classList.add('hidden');
+                console.error(err);
+            });
+        }
+    </script>
+</body>
+</html>
