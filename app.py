@@ -6,7 +6,7 @@ from src.roles import get_role
 app = Flask(__name__)
 config = AppConfig()
 
-# Diccionario de respaldo por si get_role espera texto directo
+
 ROLE_MAP = {
     1: "reclutador",
     2: "cliente potencial",
@@ -23,22 +23,21 @@ def home():
 def chat():
     data = request.json or {}
     
-    # 1. Limpieza estricta de la pregunta para que sea string puro
+    
     pregunta = str(data.get("pregunta", "")).strip()
     if not pregunta:
         return jsonify({"respuesta": "Por favor, escribe una pregunta válida."})
     
-    # 2. Manejo seguro del rol (mapeando el número del select a texto o ID según requiera src/roles.py)
+    
     try:
         role_raw = int(data.get("rol", 5))
     except (ValueError, TypeError):
         role_raw = 5
         
-    # Intentamos obtener el rol usando la función original o el respaldo
+    
     try:
         role_data = get_role(role_raw)
     except Exception:
-        # Si get_role falla con enteros, probamos pasándole el texto del rol
         role_name = ROLE_MAP.get(role_raw, "público general")
         try:
             role_data = get_role(role_name)
